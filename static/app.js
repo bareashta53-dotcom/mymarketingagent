@@ -131,44 +131,73 @@ function showStep(stepNumber) {
     document.getElementById(`step-indicator-${stepNumber}`).classList.add('active');
 }
 
-// AI Copywriter
-async function generateAICopy() {
-    const aiInput = document.getElementById('aiInput').value;
-    if (!aiInput) {
-        alert("נא להזין תיאור קצר של המוצר לפני בקשת ניסוח מה-AI.");
+// Global state for AI output
+window.aiTargetingData = null;
+
+async function analyzeTargeting() {
+    const prodDesc = document.getElementById('wizProductDesc').value;
+    const audDesc = document.getElementById('wizAudienceDesc').value;
+    const budDesc = document.getElementById('wizBudgetDesc').value;
+
+    if (!prodDesc || !audDesc) {
+        alert("נא למלא לפחות את תיאור המוצר והקהל (שאלות 1 ו-2).");
         return;
     }
 
-    const aiBtn = document.getElementById('aiBtn');
+    const aiBtn = document.getElementById('aiAnalyzeBtn');
+    const loadingFeedback = document.getElementById('aiLoadingFeedback');
+
     aiBtn.disabled = true;
-    aiBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> חושב...';
+    loadingFeedback.classList.remove('hidden');
 
     try {
-        const response = await fetch('/api/generate-copy', {
+        const response = await fetch('/api/analyze-targeting', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ product_description: aiInput })
+            body: JSON.stringify({
+                product_desc: prodDesc,
+                audience_desc: audDesc,
+                budget_desc: budDesc || "לא צוין"
+            })
         });
 
         const data = await response.json();
 
         if (response.ok && data.status === 'success') {
-            document.getElementById('wizHeadline').value = data.copy.headline;
-            document.getElementById('wizPrimaryText').value = data.copy.primary_text;
+            const ai = data.analysis;
+            window.aiTargetingData = ai; // Save to global state
 
-            // Add a little success animation or text if needed
-            aiBtn.innerHTML = '<i class="fa-solid fa-check"></i> נוסח בהצלחה!';
-            setTimeout(() => {
-                aiBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> נסה לנסח שוב';
-                aiBtn.disabled = false;
-            }, 3000);
+            // Populate Step 3 inputs
+            document.getElementById('wizHeadline').value = ai.headline || "";
+            document.getElementById('wizPrimaryText').value = ai.primary_text || "";
+            if (ai.daily_budget_dollars) {
+                document.getElementById('wizBudget').value = ai.daily_budget_dollars;
+            }
+
+            // Populate the AI Summary Card
+            const citiesStr = ai.geo_locations?.cities?.join(", ") || "כל הארץ";
+            const countriesStr = ai.geo_locations?.countries?.join(", ") || "ישראל";
+
+            document.getElementById('aiSummaryCard').innerHTML = `
+                <ul>
+                    <li><i class="fa-solid fa-earth-americas"></i> <b>מדינות:</b> ${countriesStr}</li>
+                    <li><i class="fa-solid fa-city"></i> <b>ערים מאותרות:</b> ${citiesStr}</li>
+                    <li><i class="fa-solid fa-users"></i> <b>גילאים:</b> ${ai.min_age} עד ${ai.max_age}</li>
+                    <li><i class="fa-solid fa-coins"></i> <b>תקציב התחלתי מומלץ הוגדר:</b> $${ai.daily_budget_dollars}/יום</li>
+                </ul>
+                <p style="margin-top: 10px; font-size: 0.85rem; color: #64748b;">(ה-AI שתל את נתוני הקופירייטינג והתקציב בשדות למטה. אנא הוסף רק קישור ולחץ "צור קמפיין")</p>
+            `;
+
+            // Auto-advance to step 3
+            nextStep(2);
         } else {
-            throw new Error(data.detail || "שגיאה ביצירת הטקסט");
+            throw new Error(data.detail || "שגיאה בניתוח הנתונים");
         }
     } catch (error) {
         alert("שגיאת AI: " + error.message);
+    } finally {
         aiBtn.disabled = false;
-        aiBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> נסה לנסח שוב';
+        loadingFeedback.classList.add('hidden');
     }
 }
 
@@ -236,23 +265,25 @@ async function publishCampaign() {
     const url = document.getElementById('wizLink').value;
     const budget = parseFloat(document.getElementById('wizBudget').value);
 
-    const countriesElement = document.getElementById('wizCountries');
-    const countries = Array.from(countriesElement.selectedOptions).map(opt => opt.value);
-
-    if (!uploadedImageHash || !headline || !text || !url || isNaN(budget) || countries.length === 0) {
-        feedback.innerHTML = '<span class="error-text">חסרים נתונים או שהתקציב אינו תקין. נא לבדוק את כל השלבים עמודי האשף.</span>';
+    if (!uploadedImageHash || !headline || !text || !url || isNaN(budget) || !window.aiTargetingData) {
+        feedback.innerHTML = '<span class="error-text">חסרים נתונים מקדימים (תמונה, URL) או שטרם בוצע ניתוח AI על ידי אשף "הראיון".</span>';
         return;
     }
 
     try {
         btn.disabled = true;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> בונה את הקמפיין (זה ייקח כמה שניות)...';
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> בונה קמפיין מטורף (זה ייקח כמה שניות)...';
         feedback.innerHTML = '';
+
+        // Overwrite the specific dynamic fields the AI created with the possibly user-edited values from the UI
+        window.aiTargetingData.headline = headline;
+        window.aiTargetingData.primary_text = text;
+        window.aiTargetingData.daily_budget_dollars = budget;
 
         const payload = {
             name: name,
             daily_budget_dollars: budget,
-            countries: countries,
+            targeting_json: window.aiTargetingData,
             primary_text: text,
             headline: headline,
             link_url: url,

@@ -31,17 +31,50 @@ class BudgetUpdate(BaseModel):
     campaign_id: str
     daily_budget_dollars: float
 
-class CopyRequest(BaseModel):
-    product_description: str
+class TargetingRequest(BaseModel):
+    product_desc: str
+    audience_desc: str
+    budget_desc: str
 
-class PublishConfig(BaseModel):
-    name: str # Campaign Name
+class GuidedPublishConfig(BaseModel):
+    name: str
     daily_budget_dollars: float
-    countries: List[str] # e.g. ["US", "IL"]
+    targeting_json: dict # Comes from the AI (contains min_age, max_age, geo_locations structure)
     primary_text: str
     headline: str
     link_url: str
     image_hash: str
+
+def resolve_city_keys(city_names: List[str]) -> List[dict]:
+    """Uses Meta Search API to turn city names into precise Facebook Ad Location Keys."""
+    if not city_names:
+        return []
+        
+    resolved_cities = []
+    url = f"{BASE_URL}/search"
+    
+    for city in city_names:
+        params = {
+            'type': 'adgeolocation',
+            'q': city,
+            'location_types': "['city']",
+            'access_token': ACCESS_TOKEN
+        }
+        try:
+            res = requests.get(url, params=params)
+            data = res.json()
+            if 'data' in data and len(data['data']) > 0:
+                # Take the best match (first result)
+                match = data['data'][0]
+                resolved_cities.append({
+                    "key": match['key'],
+                    "radius": 15, # Default radius in KM
+                    "distance_unit": "kilometer" 
+                })
+        except Exception as e:
+            print(f"Failed to resolve city {city}: {e}")
+            
+    return resolved_cities
 
 @app.get("/")
 def serve_dashboard():
@@ -57,9 +90,9 @@ def health_check():
     """Health check endpoint for Railway to verify the app is running."""
     return {"status": "ok", "message": "Facebook Ads Bot API is running!"}
 
-@app.post("/api/generate-copy")
-def generate_ad_copy(request: CopyRequest):
-    """Uses Gemini AI to generate Facebook Ad copy based on a product description."""
+@app.post("/api/analyze-targeting")
+def analyze_targeting(request: TargetingRequest):
+    """Uses Gemini AI to act as a marketing expert that extracts targeting configurations and generates copy."""
     if not GEMINI_API_KEY:
         raise HTTPException(status_code=500, detail="Gemini API Key is not configured on the server.")
         
@@ -67,27 +100,48 @@ def generate_ad_copy(request: CopyRequest):
         model = genai.GenerativeModel('gemini-2.5-flash')
         
         system_prompt = """
-        You are an expert digital marketing copywriter. You write high-converting Facebook Ads in Hebrew.
-        The user will give you a short description of what they are selling.
-        You must return ONLY a raw JSON strictly adhering to this format:
+        You are an elite digital marketing manager for Facebook Ads.
+        Your job is to read user interviews about their business and translate them into a strictly structured JSON configuration for a Facebook Ad campaign.
+        
+        RULES:
+        1. Always write the text (headline, primary_text) in highly persuasive, grammatically perfect Hebrew.
+        2. Extract an age range logical for the product (min_age 18 to 65).
+        3. Guess the Facebook country code (e.g. "IL" for Israel, "US" for USA).
+        4. Extract any city names mentioned into a list of strings (in English or the native language, Meta Search API accepts both).
+        5. Evaluate the user's budget answer. Recommend a logical 'daily_budget_dollars' as a number.
+        
+        OUTPUT FORMAT (Return ONLY this raw JSON, no markdown blocks):
         {
-            "headline": "A catchy, short headline (max 5 words)",
-            "primary_text": "A persuasive 2-3 sentence ad body text ending with a call to action."
+            "headline": "A catchy, short headline (max 5 words) in Hebrew",
+            "primary_text": "A persuasive 2-3 sentence ad body text ending with a call to action in Hebrew.",
+            "min_age": 18,
+            "max_age": 65,
+            "geo_locations": {
+                "countries": ["IL"],
+                "cities": ["Tel Aviv", "Jerusalem"]
+            },
+            "daily_budget_dollars": 50
         }
-        Do not use markdown formatting like ```json.
         """
         
-        response = model.generate_content(f"{system_prompt}\nUser Product: {request.product_description}")
+        user_input = f"""
+        Product Description: {request.product_desc}
+        Target Audience & Location: {request.audience_desc}
+        Budget Expectations: {request.budget_desc}
+        """
+        
+        response = model.generate_content(f"{system_prompt}\n{user_input}")
         
         # Parse the JSON response
         try:
-            # Clean up potential markdown formatting from the response
             text_resp = response.text.strip()
             if text_resp.startswith("```json"):
                 text_resp = text_resp.replace("```json", "", 1).replace("```", "")
+            if text_resp.startswith("```"):
+                text_resp = text_resp.replace("```", "", 1).replace("```", "")
             
-            copy_data = json.loads(text_resp)
-            return {"status": "success", "copy": copy_data}
+            ai_data = json.loads(text_resp)
+            return {"status": "success", "analysis": ai_data}
         except json.JSONDecodeError:
             print("Failed to parse Gemini response:", response.text)
             raise HTTPException(status_code=500, detail="AI generated invalid format.")
@@ -124,14 +178,34 @@ async def upload_media(file: UploadFile = File(...)):
         raise HTTPException(status_code=response.status_code, detail=result)
 
 @app.post("/api/publish-campaign")
-def publish_new_campaign(config: PublishConfig):
+def publish_new_campaign(config: GuidedPublishConfig):
     """Executes the full chain to create a PAUSED campaign -> adset -> ad."""
     
+    # Extract Guided AI Targeting
+    target_data = config.targeting_json
+    geo_locations = {
+        "countries": target_data.get("geo_locations", {}).get("countries", ["IL"])
+    }
+    
+    cities = target_data.get("geo_locations", {}).get("cities", [])
+    if cities:
+        resolved_cities = resolve_city_keys(cities)
+        if resolved_cities:
+            geo_locations["cities"] = resolved_cities
+            # If we specific cities, sometimes FB gets angry if we also list the country broadly.
+            # But the documentation allows sending countries + cities. For safety, let's keep both.
+
+    targeting_payload = {
+        'geo_locations': geo_locations,
+        'age_min': target_data.get('min_age', 18),
+        'age_max': target_data.get('max_age', 65)
+    }
+
     # 1. Create Campaign
     camp_url = f"{BASE_URL}/{AD_ACCOUNT_ID}/campaigns"
     camp_data = {
         'access_token': ACCESS_TOKEN,
-        'name': f"{config.name} (Auto-Botito)",
+        'name': f"{config.name} (Botito Guided)",
         'objective': 'OUTCOME_TRAFFIC',
         'status': 'PAUSED', # Keep paused for safety review
         'special_ad_categories': '[]'
@@ -146,19 +220,15 @@ def publish_new_campaign(config: PublishConfig):
     daily_budget_cents = int(config.daily_budget_dollars * 100)
     adset_data = {
         'access_token': ACCESS_TOKEN,
-        'name': f"{config.name} - AdSet",
+        'name': f"{config.name} - Targeted AdSet",
         'campaign_id': new_campaign_id,
         'daily_budget': daily_budget_cents,
         'billing_event': 'IMPRESSIONS',
         'optimization_goal': 'LINK_CLICKS',
-        'bid_amount': 20, # 20 cents bid cap (required for some traffic goals, or switch to auto-bid)
+        'bid_strategy': 'LOWEST_COST_WITHOUT_CAP',
         'status': 'PAUSED',
-        'targeting': json.dumps({'geo_locations': {'countries': config.countries}})
+        'targeting': json.dumps(targeting_payload)
     }
-    
-    # Attempt absolute lowest cost bidding for traffic without bid_amount limit
-    adset_data.pop('bid_amount')
-    adset_data['bid_strategy'] = 'LOWEST_COST_WITHOUT_CAP'
     
     adset_res = requests.post(adset_url, data=adset_data)
     if adset_res.status_code != 200:

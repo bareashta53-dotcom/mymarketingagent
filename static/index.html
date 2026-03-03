@@ -113,8 +113,8 @@
 
             <div class="wizard-steps">
                 <div class="step active" id="step-indicator-1">1. גרירת מדיה</div>
-                <div class="step" id="step-indicator-2">2. טקסט ורעיון</div>
-                <div class="step" id="step-indicator-3">3. קהל ותקציב</div>
+                <div class="step" id="step-indicator-2">2. הראיון החכם</div>
+                <div class="step" id="step-indicator-3">3. טיוטה לאישור</div>
             </div>
 
             <!-- Step 1: Media -->
@@ -135,65 +135,81 @@
                 </div>
             </div>
 
-            <!-- Step 2: Content -->
+            <!-- Step 2: The Interview -->
             <div class="wizard-pane hidden" id="wizard-step-2">
-                <h3>קופירייטינג ולתשומת לב</h3>
-                <p class="subtitle">הזן נתונים ידנית או תן ל-AI של גוגל לנסח עבורך.</p>
-
-                <div class="ai-box">
-                    <label>תן ל-AI לכתוב עבורך (חובה לכלול מה אנחנו מוכרים)</label>
-                    <div class="ai-input-wrapper">
-                        <input type="text" id="aiInput" placeholder="לדוגמא: שעון רולקס יוקרתי במבצע לזמן מוגבל...">
-                        <button id="aiBtn" class="btn-accent" onclick="generateAICopy()"><i
-                                class="fa-solid fa-wand-magic-sparkles"></i> נסח בעזרת AI</button>
-                    </div>
-                </div>
-                <hr class="sidebar-divider">
+                <h3>הראיון - תן ל-AI לעבוד בשבילך</h3>
+                <p class="subtitle">ספר לנו קצת על העסק, וה-AI שלנו יבנה עבורך טיוטת קמפיין מלאה (טקסטים, קהלים ותקציב).
+                </p>
 
                 <div class="form-group">
                     <label>שם הקמפיין הפנימי (לשימושך בלבד)</label>
                     <input type="text" id="wizCampaignName" placeholder="לדוגמא: מבצעי קיץ 2026">
                 </div>
-                <div class="form-group">
-                    <label>כותרת המודעה (Headline)</label>
-                    <input type="text" id="wizHeadline" placeholder="מבצע מטורף עכשיו באתר!">
-                </div>
-                <div class="form-group">
-                    <label>טקסט המודעה (Primary Text)</label>
-                    <textarea id="wizPrimaryText" rows="3" placeholder="ספר ללקוחות למה כדאי להם ללחוץ..."></textarea>
-                </div>
-                <div class="form-group">
-                    <label>קישור (URL) לאן להוביל אותם?</label>
-                    <input type="url" id="wizLink" placeholder="https://yourwebsite.com/product">
+
+                <div class="ai-interview-box">
+                    <div class="form-group">
+                        <label>1. מה העסק שלך מוכר / מציע?</label>
+                        <textarea id="wizProductDesc" rows="2"
+                            placeholder="לדוגמא: אני מוכר בגדי ים וחוף אופנתיים לנשים..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>2. מי קהל היעד ובאיזה אזור?</label>
+                        <textarea id="wizAudienceDesc" rows="2"
+                            placeholder="לדוגמא: נשים צעירות, בגילאי 18-35. אזור תל אביב ומרכז בלבד..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>3. מה ציפיות ההוצאה שלך (תקציב)?</label>
+                        <input type="text" id="wizBudgetDesc"
+                            placeholder="לדוגמא: אזור ה-100 שקל ביום, או 2000 בחודש...">
+                    </div>
+
+                    <button id="aiAnalyzeBtn" class="btn-accent"
+                        style="width: 100%; justify-content: center; margin-top: 1rem;" onclick="analyzeTargeting()">
+                        <i class="fa-solid fa-brain"></i> נתח ובנה לי קמפיין מנצח!
+                    </button>
+                    <div id="aiLoadingFeedback" class="action-feedback hidden"
+                        style="text-align: center; margin-top: 10px;">
+                        <i class="fa-solid fa-spinner fa-spin"></i> ה-AI בונה עכשיו אסטרטגיה...
+                    </div>
                 </div>
 
                 <div class="wizard-actions">
                     <button class="btn-primary" onclick="prevStep(2)"><i class="fa-solid fa-arrow-right"></i>
                         חזור</button>
-                    <button class="btn-accent" onclick="nextStep(2)">המשך לשלב הבא <i
+                    <!-- "Next" button is optional here, as they should click the AI button, but we leave it for free navigation -->
+                    <button class="btn-accent" onclick="nextStep(2)">המשך ידנית <i
                             class="fa-solid fa-arrow-left"></i></button>
                 </div>
             </div>
 
-            <!-- Step 3: Audience & Budget -->
+            <!-- Step 3: AI Draft Review -->
             <div class="wizard-pane hidden" id="wizard-step-3">
-                <h3>למי לשדר וכמה להשקיע?</h3>
-                <p class="subtitle">הגדרות קהל יעד ותקציב חכם.</p>
+                <h3>טיוטה מבוססת AI - רק לאשר!</h3>
+                <p class="subtitle">בוטיטו בנה עבורך את ההגדרות האופטימליות. תוכל לערוך אותן או פשוט לשגר לאוויר.</p>
 
+                <div class="ai-summary-card" id="aiSummaryCard">
+                    <!-- Dynamic Info injected via JS -->
+                    <p class="placeholder-text"><i class="fa-solid fa-info-circle"></i> טרם בוצע ניתוח AI.</p>
+                </div>
+
+                <div class="form-group" style="margin-top: 1.5rem;">
+                    <label>כותרת המודעה (Headline)</label>
+                    <input type="text" id="wizHeadline" placeholder="קליט וקצר...">
+                </div>
                 <div class="form-group">
-                    <label>מדינות יעד לפרסום</label>
-                    <select id="wizCountries" multiple class="multiselect">
-                        <option value="IL" selected>ישראל (IL)</option>
-                        <option value="US">ארצות הברית (US)</option>
-                        <option value="GB">אנגליה (GB)</option>
-                    </select>
-                    <small>ניתן לבחור מספר מדינות יחד (החזק מקש Ctrl/Cmd).</small>
+                    <label>טקסט המודעה (Primary Text)</label>
+                    <textarea id="wizPrimaryText" rows="3" placeholder="טקסט שכנוע..."></textarea>
                 </div>
 
                 <div class="form-group">
-                    <label>תקציב התחלתי יומי ($)</label>
+                    <label>קישור (URL) לאן להוביל אותם? (חובה)</label>
+                    <input type="url" id="wizLink" placeholder="https://yourwebsite.com/product">
+                </div>
+
+                <div class="form-group">
+                    <label>תקציב התחלתי יומי מומלץ ($)</label>
                     <div class="budget-input">
-                        <input type="number" id="wizBudget" value="50" min="5" step="5">
+                        <input type="number" id="wizBudget" value="50" min="5" step="1">
                     </div>
                 </div>
 
