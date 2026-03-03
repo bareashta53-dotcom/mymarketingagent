@@ -16,12 +16,12 @@ async function fetchInsights() {
     const statusMsg = document.getElementById('statusMessage');
 
     if (!campaignId) {
-        statusMsg.innerHTML = '<span class="error-text">Please enter a Campaign ID</span>';
+        statusMsg.innerHTML = '<span class="error-text">אנא הזן מזהה קמפיין תקין (ID)</span>';
         return;
     }
 
     try {
-        statusMsg.innerHTML = '<span><i class="fa-solid fa-spinner fa-spin"></i> Fetching Data...</span>';
+        statusMsg.innerHTML = '<span><i class="fa-solid fa-spinner fa-spin"></i> טוען נתונים מפייסבוק...</span>';
 
         const response = await fetch(`/insights/${campaignId}`);
         const data = await response.json();
@@ -37,13 +37,13 @@ async function fetchInsights() {
             const ctr = parseFloat(insights.ctr || 0).toFixed(2);
             document.getElementById('kpi-ctr').innerText = `${ctr}%`;
 
-            statusMsg.innerHTML = '<span class="success-text"><i class="fa-solid fa-check"></i> Data Updated</span>';
+            statusMsg.innerHTML = '<span class="success-text"><i class="fa-solid fa-check"></i> הנתונים עודכנו</span>';
         } else {
             // Handle if there's no data yet (like a new campaign)
             if (data.message) {
                 statusMsg.innerHTML = `<span class="error-text">${data.message}</span>`;
             } else {
-                throw new Error(data.detail?.error?.message || "Failed to fetch data");
+                throw new Error(data.detail?.error?.message || "שגיאה בטעינת נתונים");
             }
         }
     } catch (error) {
@@ -57,12 +57,12 @@ async function updateBudget() {
     const feedbackMsg = document.getElementById('actionFeedback');
 
     if (!campaignId || !budgetValue || budgetValue <= 0) {
-        feedbackMsg.innerHTML = '<span class="error-text">Invalid Campaign ID or Budget Amount.</span>';
+        feedbackMsg.innerHTML = '<span class="error-text">מזהה קמפיין או סכום תקציב אינם תקינים.</span>';
         return;
     }
 
     try {
-        feedbackMsg.innerHTML = '<span><i class="fa-solid fa-spinner fa-spin"></i> Updating Budget on Meta...</span>';
+        feedbackMsg.innerHTML = '<span><i class="fa-solid fa-spinner fa-spin"></i> מעדכן תקציב במערכות פייסבוק...</span>';
 
         const response = await fetch(`/update-budget`, {
             method: 'POST',
@@ -78,9 +78,9 @@ async function updateBudget() {
         const data = await response.json();
 
         if (response.ok && data.status === 'success') {
-            feedbackMsg.innerHTML = `<span class="success-text"><i class="fa-solid fa-circle-check"></i> ${data.message}</span>`;
+            feedbackMsg.innerHTML = `<span class="success-text"><i class="fa-solid fa-circle-check"></i> התקציב עודכן בהצלחה!</span>`;
         } else {
-            throw new Error(data.detail?.error?.message || "Failed to update budget");
+            throw new Error(data.detail?.error?.message || "שגיאה בעדכון התקציב");
         }
     } catch (error) {
         feedbackMsg.innerHTML = `<span class="error-text"><i class="fa-solid fa-circle-xmark"></i> ${error.message}</span>`;

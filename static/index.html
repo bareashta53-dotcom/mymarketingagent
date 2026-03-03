@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="he" dir="rtl">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyMarketingAgent | Dashboard</title>
+    <title>בוטיטו | מרכז שליטה</title>
     <link rel="stylesheet" href="/static/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 
@@ -18,20 +18,20 @@
         <aside class="sidebar">
             <div class="brand">
                 <i class="fa-solid fa-robot"></i>
-                <h2>MarketingAgent</h2>
+                <h2>בוטיטו</h2>
                 <span class="badge">PRO</span>
             </div>
 
             <div class="control-group">
-                <label for="campaignId">Active Campaign ID</label>
+                <label for="campaignId">מזהה קמפיין פעיל (ID)</label>
                 <div class="input-wrapper">
                     <i class="fa-solid fa-bullseye"></i>
-                    <input type="text" id="campaignId" value="120240979659220156" placeholder="Enter Campaign ID">
+                    <input type="text" id="campaignId" value="120240979659220156" placeholder="הזן מזהה קמפיין">
                 </div>
             </div>
 
             <button id="refreshBtn" class="btn-primary" onclick="fetchInsights()">
-                <i class="fa-solid fa-rotate-right"></i> Refresh Data
+                <i class="fa-solid fa-rotate-right"></i> רענן נתונים
             </button>
             <div id="statusMessage" class="status-msg"></div>
         </aside>
@@ -39,8 +39,8 @@
         <!-- Main Content -->
         <main class="main-content">
             <header>
-                <h1>Campaign Performance</h1>
-                <p class="subtitle">Real-time insights and automated controls</p>
+                <h1>ביצועי הקמפיין</h1>
+                <p class="subtitle">נתונים בזמן אמת ושליטה אוטומטית</p>
             </header>
 
             <!-- KPI Row -->
@@ -48,28 +48,28 @@
                 <div class="kpi-card">
                     <div class="kpi-icon money"><i class="fa-solid fa-sack-dollar"></i></div>
                     <div class="kpi-data">
-                        <h3>Spend</h3>
-                        <p id="kpi-spend">$0.00</p>
+                        <h3>הוצאה עד כה</h3>
+                        <p id="kpi-spend">₪0.00</p>
                     </div>
                 </div>
                 <div class="kpi-card">
                     <div class="kpi-icon views"><i class="fa-solid fa-eye"></i></div>
                     <div class="kpi-data">
-                        <h3>Impressions</h3>
+                        <h3>חשיפות</h3>
                         <p id="kpi-impressions">0</p>
                     </div>
                 </div>
                 <div class="kpi-card">
                     <div class="kpi-icon clicks"><i class="fa-solid fa-hand-pointer"></i></div>
                     <div class="kpi-data">
-                        <h3>Clicks</h3>
+                        <h3>קליקים</h3>
                         <p id="kpi-clicks">0</p>
                     </div>
                 </div>
                 <div class="kpi-card">
                     <div class="kpi-icon rate"><i class="fa-solid fa-chart-line"></i></div>
                     <div class="kpi-data">
-                        <h3>CTR</h3>
+                        <h3>אחוז הקלקה (CTR)</h3>
                         <p id="kpi-ctr">0.00%</p>
                     </div>
                 </div>
@@ -77,21 +77,20 @@
 
             <!-- Bot Controls -->
             <section class="controls-section">
-                <h2><i class="fa-solid fa-sliders"></i> Bot Controls</h2>
+                <h2><i class="fa-solid fa-sliders"></i> שליטה בבוטיטו</h2>
 
                 <div class="control-card">
                     <div class="control-info">
-                        <h3>Daily Budget Optimization</h3>
-                        <p>Adjust the campaign's daily spend limit immediately. The bot will apply this via the Meta
-                            API.</p>
+                        <h3>אופטימיזציית תקציב יומי</h3>
+                        <p>התאם את מגבלת ההוצאה היומית של הקמפיין. בוטיטו יחיל את השינוי מיידית דרך פייסבוק.</p>
                     </div>
                     <div class="control-action">
                         <div class="budget-input">
                             <span class="currency">$</span>
                             <input type="number" id="budgetInput" value="50" min="1" step="1">
-                            <span class="duration">/ day</span>
+                            <span class="duration">/ ליום</span>
                         </div>
-                        <button id="updateBudgetBtn" class="btn-accent" onclick="updateBudget()">Apply Changes</button>
+                        <button id="updateBudgetBtn" class="btn-accent" onclick="updateBudget()">החל שינויים</button>
                     </div>
                 </div>
                 <div id="actionFeedback" class="action-feedback"></div>
