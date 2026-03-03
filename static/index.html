@@ -98,6 +98,109 @@
         </main>
     </div>
 
+    <!-- Ad Creation Wizard Modal -->
+    <div id="wizardModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h2><i class="fa-solid fa-wand-magic-sparkles"></i> יוצר הקמפיינים החכם (AI Wizard)</h2>
+                <button class="close-btn" onclick="closeWizard()"><i class="fa-solid fa-xmark"></i></button>
+            </header>
+
+            <div class="wizard-steps">
+                <div class="step active" id="step-indicator-1">1. גרירת מדיה</div>
+                <div class="step" id="step-indicator-2">2. טקסט ורעיון</div>
+                <div class="step" id="step-indicator-3">3. קהל ותקציב</div>
+            </div>
+
+            <!-- Step 1: Media -->
+            <div class="wizard-pane active" id="wizard-step-1">
+                <h3>העלאת תמונה או סרטון</h3>
+                <p class="subtitle">העלה את הקובץ שיוצג ללקוחות במודעה.</p>
+                <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    <p>גרור לכאן תמונה או לחץ לבחירה מקבצי המחשב</p>
+                    <input type="file" id="fileInput" class="hidden" accept="image/*"
+                        onchange="handleFileSelect(event)">
+                </div>
+                <div id="filePreview" class="file-preview hidden"></div>
+
+                <div class="wizard-actions">
+                    <button class="btn-accent" onclick="nextStep(1)">המשך לשלב הבא <i
+                            class="fa-solid fa-arrow-left"></i></button>
+                </div>
+            </div>
+
+            <!-- Step 2: Content -->
+            <div class="wizard-pane hidden" id="wizard-step-2">
+                <h3>קופירייטינג ולתשומת לב</h3>
+                <p class="subtitle">מה תרצה לומר ללקוחות שלך?</p>
+
+                <div class="form-group">
+                    <label>שם הקמפיין הפנימי (לשימושך בלבד)</label>
+                    <input type="text" id="wizCampaignName" placeholder="לדוגמא: מבצעי קיץ 2026">
+                </div>
+                <div class="form-group">
+                    <label>כותרת המודעה (Headline)</label>
+                    <input type="text" id="wizHeadline" placeholder="מבצע מטורף עכשיו באתר!">
+                </div>
+                <div class="form-group">
+                    <label>טקסט המודעה (Primary Text)</label>
+                    <textarea id="wizPrimaryText" rows="3" placeholder="ספר ללקוחות למה כדאי להם ללחוץ..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>קישור (URL) לאן להוביל אותם?</label>
+                    <input type="url" id="wizLink" placeholder="https://yourwebsite.com/product">
+                </div>
+
+                <div class="wizard-actions">
+                    <button class="btn-primary" onclick="prevStep(2)"><i class="fa-solid fa-arrow-right"></i>
+                        חזור</button>
+                    <button class="btn-accent" onclick="nextStep(2)">המשך לשלב הבא <i
+                            class="fa-solid fa-arrow-left"></i></button>
+                </div>
+            </div>
+
+            <!-- Step 3: Audience & Budget -->
+            <div class="wizard-pane hidden" id="wizard-step-3">
+                <h3>למי לשדר וכמה להשקיע?</h3>
+                <p class="subtitle">הגדרות קהל יעד ותקציב חכם.</p>
+
+                <div class="form-group">
+                    <label>מדינות יעד לפרסום</label>
+                    <select id="wizCountries" multiple class="multiselect">
+                        <option value="IL" selected>ישראל (IL)</option>
+                        <option value="US">ארצות הברית (US)</option>
+                        <option value="GB">אנגליה (GB)</option>
+                    </select>
+                    <small>ניתן לבחור מספר מדינות יחד (החזק מקש Ctrl/Cmd).</small>
+                </div>
+
+                <div class="form-group">
+                    <label>תקציב התחלתי יומי ($)</label>
+                    <div class="budget-input">
+                        <input type="number" id="wizBudget" value="50" min="5" step="5">
+                    </div>
+                </div>
+
+                <div class="summary-box">
+                    <p><i class="fa-solid fa-shield-halved"></i> <b>בטיחות:</b> הקמפיין ייווצר על מצב <b>"טיוטה
+                            (PAUSED)"</b> במנהל המודעות, כך שלא יוציא כסף. תוכל לבקר בפייסבוק, לראות איך הכל נראה
+                        ולהפעיל אותו משם כשאתה מוכן!</p>
+                </div>
+
+                <div id="wizardFeedback" class="action-feedback"></div>
+
+                <div class="wizard-actions">
+                    <button class="btn-primary" onclick="prevStep(3)"><i class="fa-solid fa-arrow-right"></i>
+                        חזור</button>
+                    <button id="publishAdBtn" class="btn-success" onclick="publishCampaign()"><i
+                            class="fa-solid fa-rocket"></i> צור קמפיין עכשיו במטא!</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
     <script src="/static/app.js"></script>
 </body>
 

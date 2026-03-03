@@ -86,3 +86,168 @@ async function updateBudget() {
         feedbackMsg.innerHTML = `<span class="error-text"><i class="fa-solid fa-circle-xmark"></i> ${error.message}</span>`;
     }
 }
+
+// -----------------------------------------------------
+// WIZARD LOGIC
+// -----------------------------------------------------
+
+let uploadedImageHash = null;
+
+function openWizard() {
+    document.getElementById('wizardModal').classList.remove('hidden');
+    // Reset steps
+    showStep(1);
+    document.getElementById('wizardFeedback').innerHTML = '';
+}
+
+function closeWizard() {
+    document.getElementById('wizardModal').classList.add('hidden');
+}
+
+function nextStep(currentStep) {
+    if (currentStep === 1) {
+        if (!uploadedImageHash) {
+            alert('חובה לבחור תמונה לפני שממשיכים!');
+            return;
+        }
+    }
+    if (currentStep === 2) {
+        if (!document.getElementById('wizHeadline').value || !document.getElementById('wizPrimaryText').value) {
+            alert('אנא מלא כותרת וטקסט שיווקי.');
+            return;
+        }
+    }
+    showStep(currentStep + 1);
+}
+
+function prevStep(currentStep) {
+    showStep(currentStep - 1);
+}
+
+function showStep(stepNumber) {
+    // Hide all
+    document.querySelectorAll('.wizard-pane').forEach(el => el.classList.add('hidden'));
+    document.querySelectorAll('.wizard-steps .step').forEach(el => el.classList.remove('active'));
+
+    // Show target
+    document.getElementById(`wizard-step-${stepNumber}`).classList.remove('hidden');
+    document.getElementById(`step-indicator-${stepNumber}`).classList.add('active');
+}
+
+// Drag and Drop Logic
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+
+dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('dragover');
+});
+
+dropZone.addEventListener('dragleave', () => {
+    dropZone.classList.remove('dragover');
+});
+
+dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    if (e.dataTransfer.files.length) {
+        fileInput.files = e.dataTransfer.files;
+        handleFileSelect({ target: fileInput });
+    }
+});
+
+async function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Show preview name
+    const preview = document.getElementById('filePreview');
+    preview.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> מעלה את: ${file.name}...`;
+    preview.classList.remove('hidden');
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+        const response = await fetch('/api/upload-media', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.status === 'success') {
+            uploadedImageHash = data.hash;
+            preview.innerHTML = `<i class="fa-solid fa-check text-success"></i> הקובץ הועלה בהצלחה לפייסבוק!`;
+        } else {
+            throw new Error(data.detail?.error?.message || "שגיאה בהעלאה");
+        }
+    } catch (error) {
+        preview.innerHTML = `<span class="error-text"><i class="fa-solid fa-triangle-exclamation"></i> ${error.message}</span>`;
+        uploadedImageHash = null;
+    }
+}
+
+async function publishCampaign() {
+    const btn = document.getElementById('publishAdBtn');
+    const feedback = document.getElementById('wizardFeedback');
+
+    const name = document.getElementById('wizCampaignName').value || 'קמפיין אוטומטי';
+    const headline = document.getElementById('wizHeadline').value;
+    const text = document.getElementById('wizPrimaryText').value;
+    const url = document.getElementById('wizLink').value;
+    const budget = parseFloat(document.getElementById('wizBudget').value);
+
+    const countriesElement = document.getElementById('wizCountries');
+    const countries = Array.from(countriesElement.selectedOptions).map(opt => opt.value);
+
+    if (!uploadedImageHash || !headline || !text || !url || isNaN(budget) || countries.length === 0) {
+        feedback.innerHTML = '<span class="error-text">חסרים נתונים או שהתקציב אינו תקין. נא לבדוק את כל השלבים עמודי האשף.</span>';
+        return;
+    }
+
+    try {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> בונה את הקמפיין (זה ייקח כמה שניות)...';
+        feedback.innerHTML = '';
+
+        const payload = {
+            name: name,
+            daily_budget_dollars: budget,
+            countries: countries,
+            primary_text: text,
+            headline: headline,
+            link_url: url,
+            image_hash: uploadedImageHash
+        };
+
+        const response = await fetch(`/api/publish-campaign`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.status === 'success') {
+            feedback.innerHTML = `
+                <div class="summary-box">
+                    <h3 class="success-text"><i class="fa-solid fa-party-horn"></i> מזל טוב!</h3>
+                    <p>הקמפיין נוצר בהצלחה ונמצא תחת מזהה: <b>${data.campaign_id}</b></p>
+                    <p>כזכור, הקמפיין כרגע בסטטוס "מושהה" במנהל המודעות. היכנס לפייסבוק להפעלתו.</p>
+                </div>
+            `;
+            // Set the main dashboard value to the new ID
+            document.getElementById('campaignId').value = data.campaign_id;
+            // Clear hash so a new one is required for the next campaign
+            uploadedImageHash = null;
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> יצירה הושלמה';
+        } else {
+            throw new Error(data.detail?.error?.message || data.detail || "שגיאה ביצירת הקמפיין");
+        }
+    } catch (error) {
+        feedback.innerHTML = `<span class="error-text"><i class="fa-solid fa-circle-xmark"></i> ${error.message}</span>`;
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-rocket"></i> נסה ליצור שוב';
+    }
+}
