@@ -99,6 +99,9 @@ function openWizard() {
     showStep(1);
     document.getElementById('wizardFeedback').innerHTML = '';
 
+    // Auto-fetch available Facebook pages for Step 3
+    fetchFacebookPages();
+
     // Attach click listeners to step indicators
     document.querySelectorAll('.wizard-steps .step').forEach((el, index) => {
         el.onclick = () => {
@@ -129,6 +132,41 @@ function showStep(stepNumber) {
     // Show target
     document.getElementById(`wizard-step-${stepNumber}`).classList.remove('hidden');
     document.getElementById(`step-indicator-${stepNumber}`).classList.add('active');
+}
+
+// Fetch user's Facebook Pages
+async function fetchFacebookPages() {
+    const pageSelect = document.getElementById('wizPageSelect');
+
+    try {
+        const response = await fetch('/api/facebook-pages');
+        const data = await response.json();
+
+        if (response.ok && data.status === 'success') {
+            const pages = data.pages;
+
+            if (pages.length === 0) {
+                pageSelect.innerHTML = '<option value="" disabled selected>לא נמצאו עמודים המשוייכים לחשבון זה</option>';
+                return;
+            }
+
+            // Populate Dropdown
+            pageSelect.innerHTML = '<option value="" disabled selected>-- בחר עמוד --</option>';
+            pages.forEach(page => {
+                const option = document.createElement('option');
+                option.value = page.id;
+                option.textContent = page.name;
+                pageSelect.appendChild(option);
+            });
+
+        } else {
+            console.error("Error fetching pages:", data.detail);
+            pageSelect.innerHTML = '<option value="" disabled selected>שגיאה בטעינת עמודים</option>';
+        }
+    } catch (error) {
+        console.error("Network error fetching pages:", error);
+        pageSelect.innerHTML = '<option value="" disabled selected>שגיאת תקשורת בטעינה</option>';
+    }
 }
 
 // Global state for AI output
@@ -264,9 +302,10 @@ async function publishCampaign() {
     const text = document.getElementById('wizPrimaryText').value;
     const url = document.getElementById('wizLink').value;
     const budget = parseFloat(document.getElementById('wizBudget').value);
+    const pageId = document.getElementById('wizPageSelect').value;
 
-    if (!uploadedImageHash || !headline || !text || !url || isNaN(budget) || !window.aiTargetingData) {
-        feedback.innerHTML = '<span class="error-text">חסרים נתונים מקדימים (תמונה, URL) או שטרם בוצע ניתוח AI על ידי אשף "הראיון".</span>';
+    if (!uploadedImageHash || !headline || !text || !url || isNaN(budget) || !window.aiTargetingData || !pageId) {
+        feedback.innerHTML = '<span class="error-text">חסרים נתונים מקדימים (תמונה, URL), לא נבחר עמוד פייסבוק, או שטרם בוצע ניתוח AI על ידי אשף "הראיון".</span>';
         return;
     }
 
@@ -287,7 +326,8 @@ async function publishCampaign() {
             primary_text: text,
             headline: headline,
             link_url: url,
-            image_hash: uploadedImageHash
+            image_hash: uploadedImageHash,
+            page_id: pageId
         };
 
         const response = await fetch(`/api/publish-campaign`, {

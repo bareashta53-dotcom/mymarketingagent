@@ -44,6 +44,7 @@ class GuidedPublishConfig(BaseModel):
     headline: str
     link_url: str
     image_hash: str
+    page_id: str # Selected FB Page ID
 
 def resolve_city_keys(city_names: List[str]) -> List[dict]:
     """Uses Meta Search API to turn city names into precise Facebook Ad Location Keys."""
@@ -89,6 +90,23 @@ def serve_dashboard():
 def health_check():
     """Health check endpoint for Railway to verify the app is running."""
     return {"status": "ok", "message": "Facebook Ads Bot API is running!"}
+
+@app.get("/api/facebook-pages")
+def get_facebook_pages():
+    """Fetch all Facebook Pages the current Access Token has permission to manage."""
+    url = f"{BASE_URL}/me/accounts"
+    params = {
+        'access_token': ACCESS_TOKEN,
+        'fields': 'id,name,access_token'
+    }
+    
+    response = requests.get(url, params=params)
+    data = response.json()
+    
+    if response.status_code == 200:
+        return {"status": "success", "pages": data.get('data', [])}
+    else:
+        raise HTTPException(status_code=response.status_code, detail=data)
 
 @app.post("/api/analyze-targeting")
 def analyze_targeting(request: TargetingRequest):
@@ -241,7 +259,7 @@ def publish_new_campaign(config: GuidedPublishConfig):
         'access_token': ACCESS_TOKEN,
         'name': f"{config.name} - Creative",
         'object_story_spec': json.dumps({
-            'page_id': '1646199073235451', # Hardcoded user's page from previous conversation context
+            'page_id': config.page_id, # Dynamically provided by user from UI dropdown
             'link_data': {
                 'image_hash': config.image_hash,
                 'link': config.link_url,

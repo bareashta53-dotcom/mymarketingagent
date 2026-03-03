@@ -187,6 +187,18 @@
                 <h3>טיוטה מבוססת AI - רק לאשר!</h3>
                 <p class="subtitle">בוטיטו בנה עבורך את ההגדרות האופטימליות. תוכל לערוך אותן או פשוט לשגר לאוויר.</p>
 
+                <div class="form-group"
+                    style="margin-top: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; margin-bottom: 1.5rem;">
+                    <label>בחר עמוד פייסבוק מפרסם (Facebook Page)</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <select id="wizPageSelect" style="flex: 1;">
+                            <option value="" disabled selected>טוען עמודים זמינים...</option>
+                        </select>
+                        <button class="btn-primary" onclick="fetchFacebookPages()" title="רענן רשימת עמודים"
+                            style="padding: 0.8rem;"><i class="fa-solid fa-rotate"></i></button>
+                    </div>
+                </div>
+
                 <div class="ai-summary-card" id="aiSummaryCard">
                     <!-- Dynamic Info injected via JS -->
                     <p class="placeholder-text"><i class="fa-solid fa-info-circle"></i> טרם בוצע ניתוח AI.</p>
