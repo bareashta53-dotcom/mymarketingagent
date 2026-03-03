@@ -7,14 +7,20 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import List, Optional
 import json
+import google.generativeai as genai
 
 # Load environment variables from the .env file
 load_dotenv()
 
 ACCESS_TOKEN = os.getenv('META_ACCESS_TOKEN')
 AD_ACCOUNT_ID = os.getenv('META_AD_ACCOUNT_ID') 
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 API_VERSION = 'v19.0' # Using the current Meta Graph API version
 BASE_URL = f"https://graph.facebook.com/{API_VERSION}"
+
+# Configure Gemini
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
 
 app = FastAPI(title="Facebook Ads Manager API")
 
@@ -24,6 +30,9 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 class BudgetUpdate(BaseModel):
     campaign_id: str
     daily_budget_dollars: float
+
+class CopyRequest(BaseModel):
+    product_description: str
 
 class PublishConfig(BaseModel):
     name: str # Campaign Name
@@ -47,6 +56,44 @@ def serve_dashboard():
 def health_check():
     """Health check endpoint for Railway to verify the app is running."""
     return {"status": "ok", "message": "Facebook Ads Bot API is running!"}
+
+@app.post("/api/generate-copy")
+def generate_ad_copy(request: CopyRequest):
+    """Uses Gemini AI to generate Facebook Ad copy based on a product description."""
+    if not GEMINI_API_KEY:
+        raise HTTPException(status_code=500, detail="Gemini API Key is not configured on the server.")
+        
+    try:
+        model = genai.GenerativeModel('gemini-2.5-flash')
+        
+        system_prompt = \"\"\"
+        You are an expert digital marketing copywriter. You write high-converting Facebook Ads in Hebrew.
+        The user will give you a short description of what they are selling.
+        You must return ONLY a raw JSON strictly adhering to this format:
+        {
+            "headline": "A catchy, short headline (max 5 words)",
+            "primary_text": "A persuasive 2-3 sentence ad body text ending with a call to action."
+        }
+        Do not use markdown formatting like ```json.
+        \"\"\"
+        
+        response = model.generate_content(f"{system_prompt}\nUser Product: {request.product_description}")
+        
+        # Parse the JSON response
+        try:
+            # Clean up potential markdown formatting from the response
+            text_resp = response.text.strip()
+            if text_resp.startswith("```json"):
+                text_resp = text_resp.replace("```json", "", 1).replace("```", "")
+            
+            copy_data = json.loads(text_resp)
+            return {"status": "success", "copy": copy_data}
+        except json.JSONDecodeError:
+            print("Failed to parse Gemini response:", response.text)
+            raise HTTPException(status_code=500, detail="AI generated invalid format.")
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/upload-media")
 async def upload_media(file: UploadFile = File(...)):

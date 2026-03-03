@@ -156,6 +156,47 @@ function showStep(stepNumber) {
     document.getElementById(`step-indicator-${stepNumber}`).classList.add('active');
 }
 
+// AI Copywriter
+async function generateAICopy() {
+    const aiInput = document.getElementById('aiInput').value;
+    if (!aiInput) {
+        alert("נא להזין תיאור קצר של המוצר לפני בקשת ניסוח מה-AI.");
+        return;
+    }
+
+    const aiBtn = document.getElementById('aiBtn');
+    aiBtn.disabled = true;
+    aiBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> חושב...';
+
+    try {
+        const response = await fetch('/api/generate-copy', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ product_description: aiInput })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.status === 'success') {
+            document.getElementById('wizHeadline').value = data.copy.headline;
+            document.getElementById('wizPrimaryText').value = data.copy.primary_text;
+
+            // Add a little success animation or text if needed
+            aiBtn.innerHTML = '<i class="fa-solid fa-check"></i> נוסח בהצלחה!';
+            setTimeout(() => {
+                aiBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> נסה לנסח שוב';
+                aiBtn.disabled = false;
+            }, 3000);
+        } else {
+            throw new Error(data.detail || "שגיאה ביצירת הטקסט");
+        }
+    } catch (error) {
+        alert("שגיאת AI: " + error.message);
+        aiBtn.disabled = false;
+        aiBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> נסה לנסח שוב';
+    }
+}
+
 // Drag and Drop Logic
 const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('fileInput');

@@ -138,7 +138,17 @@
             <!-- Step 2: Content -->
             <div class="wizard-pane hidden" id="wizard-step-2">
                 <h3>קופירייטינג ולתשומת לב</h3>
-                <p class="subtitle">מה תרצה לומר ללקוחות שלך?</p>
+                <p class="subtitle">הזן נתונים ידנית או תן ל-AI של גוגל לנסח עבורך.</p>
+
+                <div class="ai-box">
+                    <label>תן ל-AI לכתוב עבורך (חובה לכלול מה אנחנו מוכרים)</label>
+                    <div class="ai-input-wrapper">
+                        <input type="text" id="aiInput" placeholder="לדוגמא: שעון רולקס יוקרתי במבצע לזמן מוגבל...">
+                        <button id="aiBtn" class="btn-accent" onclick="generateAICopy()"><i
+                                class="fa-solid fa-wand-magic-sparkles"></i> נסח בעזרת AI</button>
+                    </div>
+                </div>
+                <hr class="sidebar-divider">
 
                 <div class="form-group">
                     <label>שם הקמפיין הפנימי (לשימושך בלבד)</label>
