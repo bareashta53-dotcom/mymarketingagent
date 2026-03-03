@@ -36,8 +36,12 @@ class PublishConfig(BaseModel):
 
 @app.get("/")
 def serve_dashboard():
-    """Serve the main HTML dashboard."""
-    return FileResponse("static/index.html")
+    """Serve the main HTML dashboard with no-cache headers."""
+    response = FileResponse("static/index.html")
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 @app.get("/health")
 def health_check():
