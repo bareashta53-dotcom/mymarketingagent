@@ -66,7 +66,7 @@ def generate_ad_copy(request: CopyRequest):
     try:
         model = genai.GenerativeModel('gemini-2.5-flash')
         
-        system_prompt = \"\"\"
+        system_prompt = """
         You are an expert digital marketing copywriter. You write high-converting Facebook Ads in Hebrew.
         The user will give you a short description of what they are selling.
         You must return ONLY a raw JSON strictly adhering to this format:
@@ -75,7 +75,7 @@ def generate_ad_copy(request: CopyRequest):
             "primary_text": "A persuasive 2-3 sentence ad body text ending with a call to action."
         }
         Do not use markdown formatting like ```json.
-        \"\"\"
+        """
         
         response = model.generate_content(f"{system_prompt}\nUser Product: {request.product_description}")
         
