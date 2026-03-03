@@ -1,14 +1,15 @@
 :root {
-    --bg-dark: #0f1115;
-    --bg-panel: #1a1d24;
-    --bg-card: #232730;
-    --text-main: #f1f5f9;
-    --text-muted: #94a3b8;
-    --accent: #6366f1;
-    --accent-hover: #4f46e5;
+    --bg-dark: #f8fafc;
+    --bg-panel: #ffffff;
+    --bg-card: #f1f5f9;
+    --text-main: #334155;
+    --text-muted: #64748b;
+    --accent: #eab308;
+    /* Sun Yellow */
+    --accent-hover: #ca8a04;
     --success: #10b981;
     --danger: #ef4444;
-    --border: #2e3340;
+    --border: #e2e8f0;
 }
 
 * {
@@ -134,8 +135,8 @@ body {
 }
 
 .btn-primary:hover {
-    background-color: #2a2f3a;
-    border-color: var(--text-muted);
+    background-color: var(--bg-dark);
+    border-color: var(--accent);
 }
 
 /* Main Content */
@@ -279,7 +280,7 @@ header h1 {
 .budget-input input {
     background: transparent;
     border: none;
-    color: white;
+    color: var(--text-main);
     font-size: 1.1rem;
     font-weight: bold;
     width: 70px;
@@ -305,6 +306,7 @@ header h1 {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
+    text-shadow: 0px 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .btn-accent:hover {
@@ -416,6 +418,12 @@ header h1 {
 .wizard-steps .step {
     color: var(--text-muted);
     font-weight: 600;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.wizard-steps .step:hover {
+    color: var(--text-main);
 }
 
 .wizard-steps .step.active {
@@ -455,7 +463,8 @@ header h1 {
 .drop-zone:hover,
 .drop-zone.dragover {
     border-color: var(--accent);
-    background-color: rgba(99, 102, 241, 0.05);
+    background-color: rgba(234, 179, 8, 0.05);
+    /* Sun Yellow tint */
 }
 
 .drop-zone i {

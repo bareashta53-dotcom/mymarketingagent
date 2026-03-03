@@ -98,6 +98,28 @@ function openWizard() {
     // Reset steps
     showStep(1);
     document.getElementById('wizardFeedback').innerHTML = '';
+
+    // Attach click listeners to step indicators
+    document.querySelectorAll('.wizard-steps .step').forEach((el, index) => {
+        el.onclick = () => {
+            // Only allow jumping forward if validation passes
+            if (index + 1 === 2 && !uploadedImageHash) {
+                alert('חובה לבחור תמונה לפני שממשיכים לשלב 2!');
+                return;
+            }
+            if (index + 1 === 3) {
+                if (!uploadedImageHash) {
+                    alert('חובה לבחור תמונה תחילה.');
+                    return;
+                }
+                if (!document.getElementById('wizHeadline').value || !document.getElementById('wizPrimaryText').value) {
+                    alert('אנא מלא כותרת וטקסט שיווקי לפני מעבר לשלב 3.');
+                    return;
+                }
+            }
+            showStep(index + 1);
+        };
+    });
 }
 
 function closeWizard() {
@@ -178,7 +200,7 @@ async function handleFileSelect(event) {
 
         if (response.ok && data.status === 'success') {
             uploadedImageHash = data.hash;
-            preview.innerHTML = `<i class="fa-solid fa-check text-success"></i> הקובץ הועלה בהצלחה לפייסבוק!`;
+            preview.innerHTML = `<i class="fa-solid fa-check text-success"></i> התמונה עלתה בהצלחה`;
         } else {
             throw new Error(data.detail?.error?.message || "שגיאה בהעלאה");
         }
