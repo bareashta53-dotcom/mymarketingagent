@@ -15,14 +15,18 @@
     <div class="dashboard-container">
 
         <!-- Sidebar context -->
-        <aside class="sidebar">
-            <div class="brand">
-                <i class="fa-solid fa-robot"></i>
-                <h2>בוטיטו</h2>
-                <span class="badge">PRO</span>
+        <div class="sidebar">
+            <div class="logo">
+                <i class="fa-solid fa-robot"></i> צ'יף מרקטינג אופיסר
             </div>
 
-            <button class="btn-accent create-btn" onclick="openWizard()">
+            <div class="kpi-card" style="margin-top: 1rem; cursor: pointer;" onclick="openSettingsModal()">
+                <div class="kpi-label"><i class="fa-solid fa-gear"></i> הגדרות סוכנות/לקוח</div>
+                <div class="kpi-value" style="font-size: 1rem; color: var(--text-muted);" id="activeClientDisplay">לקוח:
+                    ברירת מחדל</div>
+            </div>
+
+            <button class="btn-primary" style="margin-top: 2rem;" onclick="openWizard()">
                 <i class="fa-solid fa-wand-magic-sparkles"></i> צור קמפיין חדש באשף
             </button>
             <hr class="sidebar-divider">
@@ -39,212 +43,251 @@
                 <i class="fa-solid fa-rotate-right"></i> רענן נתונים
             </button>
             <div id="statusMessage" class="status-msg"></div>
-        </aside>
+            </aside>
 
-        <!-- Main Content -->
-        <main class="main-content">
-            <header>
-                <h1>ביצועי הקמפיין</h1>
-                <p class="subtitle">נתונים בזמן אמת ושליטה אוטומטית</p>
-            </header>
+            <!-- Main Content -->
+            <main class="main-content">
+                <header>
+                    <h1>ביצועי הקמפיין</h1>
+                    <p class="subtitle">נתונים בזמן אמת ושליטה אוטומטית</p>
+                </header>
 
-            <!-- KPI Row -->
-            <div class="kpi-grid">
-                <div class="kpi-card">
-                    <div class="kpi-icon money"><i class="fa-solid fa-sack-dollar"></i></div>
-                    <div class="kpi-data">
-                        <h3>הוצאה עד כה</h3>
-                        <p id="kpi-spend">₪0.00</p>
-                    </div>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-icon views"><i class="fa-solid fa-eye"></i></div>
-                    <div class="kpi-data">
-                        <h3>חשיפות</h3>
-                        <p id="kpi-impressions">0</p>
-                    </div>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-icon clicks"><i class="fa-solid fa-hand-pointer"></i></div>
-                    <div class="kpi-data">
-                        <h3>קליקים</h3>
-                        <p id="kpi-clicks">0</p>
-                    </div>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-icon rate"><i class="fa-solid fa-chart-line"></i></div>
-                    <div class="kpi-data">
-                        <h3>אחוז הקלקה (CTR)</h3>
-                        <p id="kpi-ctr">0.00%</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Bot Controls -->
-            <section class="controls-section">
-                <h2><i class="fa-solid fa-sliders"></i> שליטה בבוטיטו</h2>
-
-                <div class="control-card">
-                    <div class="control-info">
-                        <h3>אופטימיזציית תקציב יומי</h3>
-                        <p>התאם את מגבלת ההוצאה היומית של הקמפיין. בוטיטו יחיל את השינוי מיידית דרך פייסבוק.</p>
-                    </div>
-                    <div class="control-action">
-                        <div class="budget-input">
-                            <span class="currency">$</span>
-                            <input type="number" id="budgetInput" value="50" min="1" step="1">
-                            <span class="duration">/ ליום</span>
+                <!-- KPI Row -->
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-icon money"><i class="fa-solid fa-sack-dollar"></i></div>
+                        <div class="kpi-data">
+                            <h3>הוצאה עד כה</h3>
+                            <p id="kpi-spend">₪0.00</p>
                         </div>
-                        <button id="updateBudgetBtn" class="btn-accent" onclick="updateBudget()">החל שינויים</button>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon views"><i class="fa-solid fa-eye"></i></div>
+                        <div class="kpi-data">
+                            <h3>חשיפות</h3>
+                            <p id="kpi-impressions">0</p>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon clicks"><i class="fa-solid fa-hand-pointer"></i></div>
+                        <div class="kpi-data">
+                            <h3>קליקים</h3>
+                            <p id="kpi-clicks">0</p>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon rate"><i class="fa-solid fa-chart-line"></i></div>
+                        <div class="kpi-data">
+                            <h3>אחוז הקלקה (CTR)</h3>
+                            <p id="kpi-ctr">0.00%</p>
+                        </div>
                     </div>
                 </div>
-                <div id="actionFeedback" class="action-feedback"></div>
-            </section>
-        </main>
-    </div>
 
-    <!-- Ad Creation Wizard Modal -->
-    <div id="wizardModal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <header class="modal-header">
-                <h2><i class="fa-solid fa-wand-magic-sparkles"></i> יוצר הקמפיינים החכם (AI Wizard)</h2>
-                <button class="close-btn" onclick="closeWizard()"><i class="fa-solid fa-xmark"></i></button>
-            </header>
+                <!-- Bot Controls -->
+                <section class="controls-section">
+                    <h2><i class="fa-solid fa-sliders"></i> שליטה בבוטיטו</h2>
 
-            <div class="wizard-steps">
-                <div class="step active" id="step-indicator-1">1. גרירת מדיה</div>
-                <div class="step" id="step-indicator-2">2. הראיון החכם</div>
-                <div class="step" id="step-indicator-3">3. טיוטה לאישור</div>
-            </div>
+                    <div class="control-card">
+                        <div class="control-info">
+                            <h3>אופטימיזציית תקציב יומי</h3>
+                            <p>התאם את מגבלת ההוצאה היומית של הקמפיין. בוטיטו יחיל את השינוי מיידית דרך פייסבוק.</p>
+                        </div>
+                        <div class="control-action">
+                            <div class="budget-input">
+                                <span class="currency">$</span>
+                                <input type="number" id="budgetInput" value="50" min="1" step="1">
+                                <span class="duration">/ ליום</span>
+                            </div>
+                            <button id="updateBudgetBtn" class="btn-accent" onclick="updateBudget()">החל
+                                שינויים</button>
+                        </div>
+                    </div>
+                    <div id="actionFeedback" class="action-feedback"></div>
+                </section>
+            </main>
+        </div>
 
-            <!-- Step 1: Media -->
-            <div class="wizard-pane active" id="wizard-step-1">
-                <h3>העלאת תמונה או סרטון</h3>
-                <p class="subtitle">העלה את הקובץ שיוצג ללקוחות במודעה.</p>
-                <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
-                    <i class="fa-solid fa-cloud-arrow-up"></i>
-                    <p>גרור לכאן תמונה או לחץ לבחירה מקבצי המחשב</p>
-                    <input type="file" id="fileInput" class="hidden" accept="image/*"
-                        onchange="handleFileSelect(event)">
+        <!-- Ad Creation Wizard Modal -->
+        <div id="wizardModal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <header class="modal-header">
+                    <h2><i class="fa-solid fa-wand-magic-sparkles"></i> יוצר הקמפיינים החכם (AI Wizard)</h2>
+                    <button class="close-btn" onclick="closeWizard()"><i class="fa-solid fa-xmark"></i></button>
+                </header>
+
+                <div class="wizard-steps">
+                    <div class="step active" id="step-indicator-1">1. גרירת מדיה</div>
+                    <div class="step" id="step-indicator-2">2. הראיון החכם</div>
+                    <div class="step" id="step-indicator-3">3. טיוטה לאישור</div>
                 </div>
-                <div id="filePreview" class="file-preview hidden"></div>
 
-                <div class="wizard-actions">
-                    <button class="btn-accent" onclick="nextStep(1)">המשך לשלב הבא <i
-                            class="fa-solid fa-arrow-left"></i></button>
+                <!-- Step 1: Media -->
+                <div class="wizard-pane active" id="wizard-step-1">
+                    <h3>העלאת תמונה או סרטון</h3>
+                    <p class="subtitle">העלה את הקובץ שיוצג ללקוחות במודעה.</p>
+                    <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <p>גרור לכאן תמונה או לחץ לבחירה מקבצי המחשב</p>
+                        <input type="file" id="fileInput" class="hidden" accept="image/*"
+                            onchange="handleFileSelect(event)">
+                    </div>
+                    <div id="filePreview" class="file-preview hidden"></div>
+
+                    <div class="wizard-actions">
+                        <button class="btn-accent" onclick="nextStep(1)">המשך לשלב הבא <i
+                                class="fa-solid fa-arrow-left"></i></button>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Step 2: The Interview -->
-            <div class="wizard-pane hidden" id="wizard-step-2">
-                <h3>הראיון - תן ל-AI לעבוד בשבילך</h3>
-                <p class="subtitle">ספר לנו קצת על העסק, וה-AI שלנו יבנה עבורך טיוטת קמפיין מלאה (טקסטים, קהלים ותקציב).
+                <!-- Step 2: The Interview -->
+                <div class="wizard-pane hidden" id="wizard-step-2">
+                    <h3>הראיון - תן ל-AI לעבוד בשבילך</h3>
+                    <p class="subtitle">ספר לנו קצת על העסק, וה-AI שלנו יבנה עבורך טיוטת קמפיין מלאה (טקסטים, קהלים
+                        ותקציב).
+                    </p>
+
+                    <div class="form-group">
+                        <label>שם הקמפיין הפנימי (לשימושך בלבד)</label>
+                        <input type="text" id="wizCampaignName" placeholder="לדוגמא: מבצעי קיץ 2026">
+                    </div>
+
+                    <div class="ai-interview-box">
+                        <div class="form-group">
+                            <label>1. מה העסק שלך מוכר / מציע?</label>
+                            <textarea id="wizProductDesc" rows="2"
+                                placeholder="לדוגמא: אני מוכר בגדי ים וחוף אופנתיים לנשים..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>2. מי קהל היעד ובאיזה אזור?</label>
+                            <textarea id="wizAudienceDesc" rows="2"
+                                placeholder="לדוגמא: נשים צעירות, בגילאי 18-35. אזור תל אביב ומרכז בלבד..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>3. מה ציפיות ההוצאה שלך (תקציב)?</label>
+                            <input type="text" id="wizBudgetDesc"
+                                placeholder="לדוגמא: אזור ה-100 שקל ביום, או 2000 בחודש...">
+                        </div>
+
+                        <button id="aiAnalyzeBtn" class="btn-accent"
+                            style="width: 100%; justify-content: center; margin-top: 1rem;"
+                            onclick="analyzeTargeting()">
+                            <i class="fa-solid fa-brain"></i> נתח ובנה לי קמפיין מנצח!
+                        </button>
+                        <div id="aiLoadingFeedback" class="action-feedback hidden"
+                            style="text-align: center; margin-top: 10px;">
+                            <i class="fa-solid fa-spinner fa-spin"></i> ה-AI בונה עכשיו אסטרטגיה...
+                        </div>
+                    </div>
+
+                    <div class="wizard-actions">
+                        <button class="btn-primary" onclick="prevStep(2)"><i class="fa-solid fa-arrow-right"></i>
+                            חזור</button>
+                        <!-- "Next" button is optional here, as they should click the AI button, but we leave it for free navigation -->
+                        <button class="btn-accent" onclick="nextStep(2)">המשך ידנית <i
+                                class="fa-solid fa-arrow-left"></i></button>
+                    </div>
+                </div>
+
+                <!-- Step 3: AI Draft Review -->
+                <div class="wizard-pane hidden" id="wizard-step-3">
+                    <h3>טיוטה מבוססת AI - רק לאשר!</h3>
+                    <p class="subtitle">בוטיטו בנה עבורך את ההגדרות האופטימליות. תוכל לערוך אותן או פשוט לשגר לאוויר.
+                    </p>
+
+                    <div class="form-group"
+                        style="margin-top: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; margin-bottom: 1.5rem;">
+                        <label>בחר עמוד פייסבוק מפרסם (Facebook Page)</label>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <select id="wizPageSelect" style="flex: 1;">
+                                <option value="" disabled selected>טוען עמודים זמינים...</option>
+                            </select>
+                            <button class="btn-primary" onclick="fetchFacebookPages()" title="רענן רשימת עמודים"
+                                style="padding: 0.8rem;"><i class="fa-solid fa-rotate"></i></button>
+                        </div>
+                    </div>
+
+                    <div class="ai-summary-card" id="aiSummaryCard">
+                        <!-- Dynamic Info injected via JS -->
+                        <p class="placeholder-text"><i class="fa-solid fa-info-circle"></i> טרם בוצע ניתוח AI.</p>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 1.5rem;">
+                        <label>כותרת המודעה (Headline)</label>
+                        <input type="text" id="wizHeadline" placeholder="קליט וקצר...">
+                    </div>
+                    <div class="form-group">
+                        <label>טקסט המודעה (Primary Text)</label>
+                        <textarea id="wizPrimaryText" rows="3" placeholder="טקסט שכנוע..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>קישור (URL) לאן להוביל אותם? (חובה)</label>
+                        <input type="url" id="wizLink" placeholder="https://yourwebsite.com/product">
+                    </div>
+
+                    <div class="form-group">
+                        <label>תקציב התחלתי יומי מומלץ ($)</label>
+                        <div class="budget-input">
+                            <input type="number" id="wizBudget" value="50" min="5" step="1">
+                        </div>
+                    </div>
+
+                    <div class="summary-box">
+                        <p><i class="fa-solid fa-shield-halved"></i> <b>בטיחות:</b> הקמפיין ייווצר על מצב <b>"טיוטה
+                                (PAUSED)"</b> במנהל המודעות, כך שלא יוציא כסף. תוכל לבקר בפייסבוק, לראות איך הכל נראה
+                            ולהפעיל אותו משם כשאתה מוכן!</p>
+                    </div>
+
+                    <div id="wizardFeedback" class="action-feedback"></div>
+
+                    <div class="wizard-actions">
+                        <button class="btn-primary" onclick="prevStep(3)"><i class="fa-solid fa-arrow-right"></i>
+                            חזור</button>
+                        <button id="publishAdBtn" class="btn-success" onclick="publishCampaign()"><i
+                                class="fa-solid fa-rocket"></i> צור קמפיין עכשיו במטא!</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ----------------------------------------------------------------- -->
+        <!-- AGENCY SETTINGS MODAL -->
+        <!-- ----------------------------------------------------------------- -->
+        <div id="settingsModal" class="modal hidden">
+            <div class="modal-content" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h2><i class="fa-solid fa-briefcase"></i> הגדרות לקוח (מצב סוכנות)</h2>
+                    <button class="close-btn" onclick="closeSettingsModal()"><i class="fa-solid fa-times"></i></button>
+                </div>
+
+                <p style="margin-bottom: 20px; font-size: 0.9rem; color: var(--text-muted);">
+                    כדי להפריד בין הלקוחות השונים (כמו האפליקציות שלך או דוכני הפירות של החבר), חבר את פרטי חשבון
+                    המודעות הספציפי. המידע נשמר אך ורק בדפדפן שלך ולא עובר לשרת.
                 </p>
 
                 <div class="form-group">
-                    <label>שם הקמפיין הפנימי (לשימושך בלבד)</label>
-                    <input type="text" id="wizCampaignName" placeholder="לדוגמא: מבצעי קיץ 2026">
+                    <label>מזהה חשבון פייסבוק (Ad Account ID)</label>
+                    <input type="text" id="agencyAdAccountId" placeholder="למשל: act_123456789">
+                    <span class="help-text">הכנס את התחילית act_ במידה וצריך</span>
                 </div>
 
-                <div class="ai-interview-box">
-                    <div class="form-group">
-                        <label>1. מה העסק שלך מוכר / מציע?</label>
-                        <textarea id="wizProductDesc" rows="2"
-                            placeholder="לדוגמא: אני מוכר בגדי ים וחוף אופנתיים לנשים..."></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>2. מי קהל היעד ובאיזה אזור?</label>
-                        <textarea id="wizAudienceDesc" rows="2"
-                            placeholder="לדוגמא: נשים צעירות, בגילאי 18-35. אזור תל אביב ומרכז בלבד..."></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>3. מה ציפיות ההוצאה שלך (תקציב)?</label>
-                        <input type="text" id="wizBudgetDesc"
-                            placeholder="לדוגמא: אזור ה-100 שקל ביום, או 2000 בחודש...">
-                    </div>
-
-                    <button id="aiAnalyzeBtn" class="btn-accent"
-                        style="width: 100%; justify-content: center; margin-top: 1rem;" onclick="analyzeTargeting()">
-                        <i class="fa-solid fa-brain"></i> נתח ובנה לי קמפיין מנצח!
-                    </button>
-                    <div id="aiLoadingFeedback" class="action-feedback hidden"
-                        style="text-align: center; margin-top: 10px;">
-                        <i class="fa-solid fa-spinner fa-spin"></i> ה-AI בונה עכשיו אסטרטגיה...
-                    </div>
+                <div class="form-group">
+                    <label>אסימון גישה (Access Token) <span
+                            style="font-size: 0.8em; color: var(--warning);">(אופציונלי)</span></label>
+                    <input type="password" id="agencyAccessToken"
+                        placeholder="השאר ריק כדי להשתמש באסימון הראשי של הסוכנות">
                 </div>
 
-                <div class="wizard-actions">
-                    <button class="btn-primary" onclick="prevStep(2)"><i class="fa-solid fa-arrow-right"></i>
-                        חזור</button>
-                    <!-- "Next" button is optional here, as they should click the AI button, but we leave it for free navigation -->
-                    <button class="btn-accent" onclick="nextStep(2)">המשך ידנית <i
-                            class="fa-solid fa-arrow-left"></i></button>
-                </div>
+                <button class="btn-primary" style="width: 100%; margin-top: 1rem;" onclick="saveAgencySettings()">
+                    <i class="fa-solid fa-floppy-disk"></i> שמור פרטי לקוח
+                </button>
+                <div id="settingsFeedback" style="text-align: center; margin-top: 10px;"></div>
             </div>
-
-            <!-- Step 3: AI Draft Review -->
-            <div class="wizard-pane hidden" id="wizard-step-3">
-                <h3>טיוטה מבוססת AI - רק לאשר!</h3>
-                <p class="subtitle">בוטיטו בנה עבורך את ההגדרות האופטימליות. תוכל לערוך אותן או פשוט לשגר לאוויר.</p>
-
-                <div class="form-group"
-                    style="margin-top: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; margin-bottom: 1.5rem;">
-                    <label>בחר עמוד פייסבוק מפרסם (Facebook Page)</label>
-                    <div style="display: flex; gap: 10px; align-items: center;">
-                        <select id="wizPageSelect" style="flex: 1;">
-                            <option value="" disabled selected>טוען עמודים זמינים...</option>
-                        </select>
-                        <button class="btn-primary" onclick="fetchFacebookPages()" title="רענן רשימת עמודים"
-                            style="padding: 0.8rem;"><i class="fa-solid fa-rotate"></i></button>
-                    </div>
-                </div>
-
-                <div class="ai-summary-card" id="aiSummaryCard">
-                    <!-- Dynamic Info injected via JS -->
-                    <p class="placeholder-text"><i class="fa-solid fa-info-circle"></i> טרם בוצע ניתוח AI.</p>
-                </div>
-
-                <div class="form-group" style="margin-top: 1.5rem;">
-                    <label>כותרת המודעה (Headline)</label>
-                    <input type="text" id="wizHeadline" placeholder="קליט וקצר...">
-                </div>
-                <div class="form-group">
-                    <label>טקסט המודעה (Primary Text)</label>
-                    <textarea id="wizPrimaryText" rows="3" placeholder="טקסט שכנוע..."></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label>קישור (URL) לאן להוביל אותם? (חובה)</label>
-                    <input type="url" id="wizLink" placeholder="https://yourwebsite.com/product">
-                </div>
-
-                <div class="form-group">
-                    <label>תקציב התחלתי יומי מומלץ ($)</label>
-                    <div class="budget-input">
-                        <input type="number" id="wizBudget" value="50" min="5" step="1">
-                    </div>
-                </div>
-
-                <div class="summary-box">
-                    <p><i class="fa-solid fa-shield-halved"></i> <b>בטיחות:</b> הקמפיין ייווצר על מצב <b>"טיוטה
-                            (PAUSED)"</b> במנהל המודעות, כך שלא יוציא כסף. תוכל לבקר בפייסבוק, לראות איך הכל נראה
-                        ולהפעיל אותו משם כשאתה מוכן!</p>
-                </div>
-
-                <div id="wizardFeedback" class="action-feedback"></div>
-
-                <div class="wizard-actions">
-                    <button class="btn-primary" onclick="prevStep(3)"><i class="fa-solid fa-arrow-right"></i>
-                        חזור</button>
-                    <button id="publishAdBtn" class="btn-success" onclick="publishCampaign()"><i
-                            class="fa-solid fa-rocket"></i> צור קמפיין עכשיו במטא!</button>
-                </div>
-            </div>
-
         </div>
-    </div>
 
-    <script src="/static/app.js"></script>
+        <script src="/static/app.js"></script>
 </body>
 
 </html>

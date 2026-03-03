@@ -1,3 +1,74 @@
+// -----------------------------------------------------
+// AGENCY MODE (Auth Headers)
+// -----------------------------------------------------
+
+function getAuthHeaders() {
+    const headers = {};
+    const adAccountId = localStorage.getItem('botito_ad_account_id');
+    const accessToken = localStorage.getItem('botito_access_token');
+
+    if (adAccountId) {
+        headers['X-Meta-Ad-Account-Id'] = adAccountId;
+    }
+    if (accessToken) {
+        headers['X-Meta-Access-Token'] = accessToken;
+    }
+    return headers;
+}
+
+// Fetch insights on load
+document.addEventListener("DOMContentLoaded", () => {
+    loadAgencySettings();
+    fetchInsights();
+});
+
+function loadAgencySettings() {
+    const defaultAcc = localStorage.getItem('botito_ad_account_id');
+    const disp = document.getElementById('activeClientDisplay');
+    if (defaultAcc) {
+        disp.innerText = `לקוח: ${defaultAcc}`;
+    } else {
+        disp.innerText = 'לקוח: ברירת מחדל (שרת)';
+    }
+}
+
+function openSettingsModal() {
+    document.getElementById('settingsModal').classList.remove('hidden');
+    document.getElementById('agencyAdAccountId').value = localStorage.getItem('botito_ad_account_id') || '';
+    document.getElementById('agencyAccessToken').value = localStorage.getItem('botito_access_token') || '';
+    document.getElementById('settingsFeedback').innerHTML = '';
+}
+
+function closeSettingsModal() {
+    document.getElementById('settingsModal').classList.add('hidden');
+}
+
+function saveAgencySettings() {
+    const accId = document.getElementById('agencyAdAccountId').value.trim();
+    const token = document.getElementById('agencyAccessToken').value.trim();
+
+    if (accId) {
+        localStorage.setItem('botito_ad_account_id', accId);
+    } else {
+        localStorage.removeItem('botito_ad_account_id');
+    }
+
+    if (token) {
+        localStorage.setItem('botito_access_token', token);
+    } else {
+        localStorage.removeItem('botito_access_token');
+    }
+
+    loadAgencySettings();
+    document.getElementById('settingsFeedback').innerHTML = '<span class="success-text"><i class="fa-solid fa-check"></i> נשמר בהצלחה!</span>';
+
+    // Refresh insights automatically for the new client
+    setTimeout(() => {
+        closeSettingsModal();
+        fetchInsights();
+    }, 1500);
+}
+
 // Utility to parse money
 const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', {
@@ -5,11 +76,6 @@ const formatCurrency = (amount) => {
         currency: 'USD',
     }).format(amount);
 };
-
-// Fetch insights on load
-document.addEventListener("DOMContentLoaded", () => {
-    fetchInsights();
-});
 
 async function fetchInsights() {
     const campaignId = document.getElementById('campaignId').value;
@@ -23,7 +89,11 @@ async function fetchInsights() {
     try {
         statusMsg.innerHTML = '<span><i class="fa-solid fa-spinner fa-spin"></i> טוען נתונים מפייסבוק...</span>';
 
-        const response = await fetch(`/insights/${campaignId}`);
+        const response = await fetch(`/insights/${campaignId}`, {
+            headers: {
+                ...getAuthHeaders()
+            }
+        });
         const data = await response.json();
 
         if (response.ok && data.status === 'success') {
@@ -67,7 +137,8 @@ async function updateBudget() {
         const response = await fetch(`/update-budget`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                ...getAuthHeaders()
             },
             body: JSON.stringify({
                 campaign_id: campaignId,
@@ -139,7 +210,11 @@ async function fetchFacebookPages() {
     const pageSelect = document.getElementById('wizPageSelect');
 
     try {
-        const response = await fetch('/api/facebook-pages');
+        const response = await fetch('/api/facebook-pages', {
+            headers: {
+                ...getAuthHeaders()
+            }
+        });
         const data = await response.json();
 
         if (response.ok && data.status === 'success') {
@@ -191,7 +266,10 @@ async function analyzeTargeting() {
     try {
         const response = await fetch('/api/analyze-targeting', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                ...getAuthHeaders()
+            },
             body: JSON.stringify({
                 product_desc: prodDesc,
                 audience_desc: audDesc,
@@ -276,6 +354,9 @@ async function handleFileSelect(event) {
     try {
         const response = await fetch('/api/upload-media', {
             method: 'POST',
+            headers: {
+                ...getAuthHeaders()
+            },
             body: formData
         });
 
@@ -332,7 +413,10 @@ async function publishCampaign() {
 
         const response = await fetch(`/api/publish-campaign`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                ...getAuthHeaders()
+            },
             body: JSON.stringify(payload)
         });
 

@@ -1,19 +1,19 @@
 import os
 import requests
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Request, Depends, Header
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Tuple
 import json
 import google.generativeai as genai
 
 # Load environment variables from the .env file
 load_dotenv()
 
-ACCESS_TOKEN = os.getenv('META_ACCESS_TOKEN')
-AD_ACCOUNT_ID = os.getenv('META_AD_ACCOUNT_ID') 
+ENV_ACCESS_TOKEN = os.getenv('META_ACCESS_TOKEN')
+ENV_AD_ACCOUNT_ID = os.getenv('META_AD_ACCOUNT_ID') 
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 API_VERSION = 'v19.0' # Using the current Meta Graph API version
 BASE_URL = f"https://graph.facebook.com/{API_VERSION}"
@@ -22,7 +22,19 @@ BASE_URL = f"https://graph.facebook.com/{API_VERSION}"
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 
-app = FastAPI(title="Facebook Ads Manager API")
+app = FastAPI(title="Botito Agency Manager API")
+
+# Dependency to extract Meta auth from Headers (Fallback to .env)
+def get_meta_auth(request: Request) -> Tuple[str, str]:
+    access_token = request.headers.get('x-meta-access-token', ENV_ACCESS_TOKEN)
+    ad_account_id = request.headers.get('x-meta-ad-account-id', ENV_AD_ACCOUNT_ID)
+    
+    if not access_token or not ad_account_id:
+        raise HTTPException(
+            status_code=401, 
+            detail="Missing Meta API credentials. Please configure them in the Agency Settings or .env file."
+        )
+    return access_token, ad_account_id
 
 # Mount the static directory to serve CSS and JS files
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -46,7 +58,7 @@ class GuidedPublishConfig(BaseModel):
     image_hash: str
     page_id: str # Selected FB Page ID
 
-def resolve_city_keys(city_names: List[str]) -> List[dict]:
+def resolve_city_keys(city_names: List[str], access_token: str) -> List[dict]:
     """Uses Meta Search API to turn city names into precise Facebook Ad Location Keys."""
     if not city_names:
         return []
@@ -59,7 +71,7 @@ def resolve_city_keys(city_names: List[str]) -> List[dict]:
             'type': 'adgeolocation',
             'q': city,
             'location_types': "['city']",
-            'access_token': ACCESS_TOKEN
+            'access_token': access_token
         }
         try:
             res = requests.get(url, params=params)
@@ -92,11 +104,12 @@ def health_check():
     return {"status": "ok", "message": "Facebook Ads Bot API is running!"}
 
 @app.get("/api/facebook-pages")
-def get_facebook_pages():
+def get_facebook_pages(auth: Tuple[str, str] = Depends(get_meta_auth)):
     """Fetch all Facebook Pages the current Access Token has permission to manage."""
+    access_token, _ = auth
     url = f"{BASE_URL}/me/accounts"
     params = {
-        'access_token': ACCESS_TOKEN,
+        'access_token': access_token,
         'fields': 'id,name,access_token'
     }
     
@@ -168,12 +181,17 @@ def analyze_targeting(request: TargetingRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/upload-media")
-async def upload_media(file: UploadFile = File(...)):
+async def upload_media(
+    file: UploadFile = File(...),
+    auth: Tuple[str, str] = Depends(get_meta_auth)
+):
     """Uploads an image to the Meta Ad Account and returns the image hash."""
+    access_token, ad_account_id = auth
+    
     if not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="Only image uploads are supported currently.")
         
-    url = f"{BASE_URL}/{AD_ACCOUNT_ID}/adimages"
+    url = f"{BASE_URL}/{ad_account_id}/adimages"
     
     # Read file content safely
     contents = await file.read()
@@ -182,7 +200,7 @@ async def upload_media(file: UploadFile = File(...)):
         'filename': (file.filename, contents, file.content_type)
     }
     data = {
-        'access_token': ACCESS_TOKEN
+        'access_token': access_token
     }
     
     response = requests.post(url, data=data, files=files)
@@ -196,10 +214,12 @@ async def upload_media(file: UploadFile = File(...)):
         raise HTTPException(status_code=response.status_code, detail=result)
 
 @app.post("/api/publish-campaign")
-def publish_new_campaign(config: GuidedPublishConfig):
+def publish_new_campaign(
+    config: GuidedPublishConfig,
+    auth: Tuple[str, str] = Depends(get_meta_auth)
+):
     """Executes the full chain to create a PAUSED campaign -> adset -> ad."""
-    
-    # Extract Guided AI Targeting
+    access_token, ad_account_id = auth
     target_data = config.targeting_json
     geo_locations = {
         "countries": target_data.get("geo_locations", {}).get("countries", ["IL"])
@@ -207,11 +227,9 @@ def publish_new_campaign(config: GuidedPublishConfig):
     
     cities = target_data.get("geo_locations", {}).get("cities", [])
     if cities:
-        resolved_cities = resolve_city_keys(cities)
+        resolved_cities = resolve_city_keys(cities, access_token)
         if resolved_cities:
             geo_locations["cities"] = resolved_cities
-            # If we specific cities, sometimes FB gets angry if we also list the country broadly.
-            # But the documentation allows sending countries + cities. For safety, let's keep both.
 
     targeting_payload = {
         'geo_locations': geo_locations,
@@ -220,9 +238,9 @@ def publish_new_campaign(config: GuidedPublishConfig):
     }
 
     # 1. Create Campaign
-    camp_url = f"{BASE_URL}/{AD_ACCOUNT_ID}/campaigns"
+    camp_url = f"{BASE_URL}/{ad_account_id}/campaigns"
     camp_data = {
-        'access_token': ACCESS_TOKEN,
+        'access_token': access_token,
         'name': f"{config.name} (Botito Guided)",
         'objective': 'OUTCOME_TRAFFIC',
         'status': 'PAUSED', # Keep paused for safety review
@@ -234,10 +252,10 @@ def publish_new_campaign(config: GuidedPublishConfig):
     new_campaign_id = camp_res.json()['id']
     
     # 2. Create Ad Set
-    adset_url = f"{BASE_URL}/{AD_ACCOUNT_ID}/adsets"
+    adset_url = f"{BASE_URL}/{ad_account_id}/adsets"
     daily_budget_cents = int(config.daily_budget_dollars * 100)
     adset_data = {
-        'access_token': ACCESS_TOKEN,
+        'access_token': access_token,
         'name': f"{config.name} - Targeted AdSet",
         'campaign_id': new_campaign_id,
         'daily_budget': daily_budget_cents,
@@ -254,9 +272,9 @@ def publish_new_campaign(config: GuidedPublishConfig):
     new_adset_id = adset_res.json()['id']
     
     # 3. Create Ad Creative (Link image, text, and URL)
-    creative_url = f"{BASE_URL}/{AD_ACCOUNT_ID}/adcreatives"
+    creative_url = f"{BASE_URL}/{ad_account_id}/adcreatives"
     creative_data = {
-        'access_token': ACCESS_TOKEN,
+        'access_token': access_token,
         'name': f"{config.name} - Creative",
         'object_story_spec': json.dumps({
             'page_id': config.page_id, # Dynamically provided by user from UI dropdown
@@ -274,9 +292,9 @@ def publish_new_campaign(config: GuidedPublishConfig):
     new_creative_id = creative_res.json()['id']
     
     # 4. Create Final Ad
-    ad_url = f"{BASE_URL}/{AD_ACCOUNT_ID}/ads"
+    ad_url = f"{BASE_URL}/{ad_account_id}/ads"
     ad_data = {
-        'access_token': ACCESS_TOKEN,
+        'access_token': access_token,
         'name': f"{config.name} - Final Ad",
         'adset_id': new_adset_id,
         'creative': json.dumps({'creative_id': new_creative_id}),
@@ -293,14 +311,15 @@ def publish_new_campaign(config: GuidedPublishConfig):
     }
 
 @app.get("/test-connection")
-def test_connection():
+def test_connection(auth: Tuple[str, str] = Depends(get_meta_auth)):
     """Test the connection to the Facebook Ads API by fetching campaigns."""
-    if not ACCESS_TOKEN or 'your_access_token_here' in ACCESS_TOKEN:
-        raise HTTPException(status_code=500, detail="Error: Please set up the META_ACCESS_TOKEN in the environment")
+    access_token, ad_account_id = auth
+    if 'your_access_token_here' in access_token:
+        raise HTTPException(status_code=500, detail="Error: Please configure META_ACCESS_TOKEN via the UI Settings.")
 
-    url = f"https://graph.facebook.com/{API_VERSION}/{AD_ACCOUNT_ID}/campaigns"
+    url = f"https://graph.facebook.com/{API_VERSION}/{ad_account_id}/campaigns"
     params = {
-        'access_token': ACCESS_TOKEN,
+        'access_token': access_token,
         'fields': 'id,name,status,objective'
     }
     
@@ -313,14 +332,18 @@ def test_connection():
     return {"status": "success", "campaigns": campaigns}
 
 @app.post("/update-budget")
-def update_campaign_budget(request: BudgetUpdate):
+def update_campaign_budget(
+    request: BudgetUpdate,
+    auth: Tuple[str, str] = Depends(get_meta_auth)
+):
     """Update daily budget for the entire campaign (if using CBO)."""
+    access_token, _ = auth
     # Facebook API expects budget in cents/pence
     daily_budget_cents = int(request.daily_budget_dollars * 100)
     
     update_url = f"https://graph.facebook.com/{API_VERSION}/{request.campaign_id}"
     update_params = {
-        'access_token': ACCESS_TOKEN,
+        'access_token': access_token,
         'daily_budget': daily_budget_cents
     }
     
@@ -333,11 +356,15 @@ def update_campaign_budget(request: BudgetUpdate):
         raise HTTPException(status_code=response.status_code, detail=data)
 
 @app.get("/insights/{campaign_id}")
-def get_campaign_insights(campaign_id: str):
+def get_campaign_insights(
+    campaign_id: str,
+    auth: Tuple[str, str] = Depends(get_meta_auth)
+):
     """Fetch real-time analytics data for the campaign."""
+    access_token, _ = auth
     url = f"https://graph.facebook.com/{API_VERSION}/{campaign_id}/insights"
     params = {
-        'access_token': ACCESS_TOKEN,
+        'access_token': access_token,
         'fields': 'spend,impressions,clicks,reach,cpc,ctr',
         'date_preset': 'maximum' # Get lifetime data or replace with 'today'
     }
