@@ -2,6 +2,8 @@ import os
 import requests
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 # Load environment variables from the .env file
@@ -13,14 +15,22 @@ API_VERSION = 'v19.0' # Using the current Meta Graph API version
 
 app = FastAPI(title="Facebook Ads Manager API")
 
+# Mount the static directory to serve CSS and JS files
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 class BudgetUpdate(BaseModel):
     campaign_id: str
     daily_budget_dollars: float
 
 @app.get("/")
-def read_root():
+def serve_dashboard():
+    """Serve the main HTML dashboard."""
+    return FileResponse("static/index.html")
+
+@app.get("/health")
+def health_check():
     """Health check endpoint for Railway to verify the app is running."""
-    return {"status": "ok", "message": "Facebook Ads Bot is running!"}
+    return {"status": "ok", "message": "Facebook Ads Bot API is running!"}
 
 @app.get("/test-connection")
 def test_connection():

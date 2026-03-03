@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyMarketingAgent | Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+
+<body>
+
+    <div class="dashboard-container">
+
+        <!-- Sidebar context -->
+        <aside class="sidebar">
+            <div class="brand">
+                <i class="fa-solid fa-robot"></i>
+                <h2>MarketingAgent</h2>
+                <span class="badge">PRO</span>
+            </div>
+
+            <div class="control-group">
+                <label for="campaignId">Active Campaign ID</label>
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-bullseye"></i>
+                    <input type="text" id="campaignId" value="120240979659220156" placeholder="Enter Campaign ID">
+                </div>
+            </div>
+
+            <button id="refreshBtn" class="btn-primary" onclick="fetchInsights()">
+                <i class="fa-solid fa-rotate-right"></i> Refresh Data
+            </button>
+            <div id="statusMessage" class="status-msg"></div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header>
+                <h1>Campaign Performance</h1>
+                <p class="subtitle">Real-time insights and automated controls</p>
+            </header>
+
+            <!-- KPI Row -->
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-icon money"><i class="fa-solid fa-sack-dollar"></i></div>
+                    <div class="kpi-data">
+                        <h3>Spend</h3>
+                        <p id="kpi-spend">$0.00</p>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon views"><i class="fa-solid fa-eye"></i></div>
+                    <div class="kpi-data">
+                        <h3>Impressions</h3>
+                        <p id="kpi-impressions">0</p>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon clicks"><i class="fa-solid fa-hand-pointer"></i></div>
+                    <div class="kpi-data">
+                        <h3>Clicks</h3>
+                        <p id="kpi-clicks">0</p>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon rate"><i class="fa-solid fa-chart-line"></i></div>
+                    <div class="kpi-data">
+                        <h3>CTR</h3>
+                        <p id="kpi-ctr">0.00%</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bot Controls -->
+            <section class="controls-section">
+                <h2><i class="fa-solid fa-sliders"></i> Bot Controls</h2>
+
+                <div class="control-card">
+                    <div class="control-info">
+                        <h3>Daily Budget Optimization</h3>
+                        <p>Adjust the campaign's daily spend limit immediately. The bot will apply this via the Meta
+                            API.</p>
+                    </div>
+                    <div class="control-action">
+                        <div class="budget-input">
+                            <span class="currency">$</span>
+                            <input type="number" id="budgetInput" value="50" min="1" step="1">
+                            <span class="duration">/ day</span>
+                        </div>
+                        <button id="updateBudgetBtn" class="btn-accent" onclick="updateBudget()">Apply Changes</button>
+                    </div>
+                </div>
+                <div id="actionFeedback" class="action-feedback"></div>
+            </section>
+        </main>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+
+</html>
