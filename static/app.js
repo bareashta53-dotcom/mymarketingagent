@@ -102,21 +102,7 @@ function openWizard() {
     // Attach click listeners to step indicators
     document.querySelectorAll('.wizard-steps .step').forEach((el, index) => {
         el.onclick = () => {
-            // Only allow jumping forward if validation passes
-            if (index + 1 === 2 && !uploadedImageHash) {
-                alert('חובה לבחור תמונה לפני שממשיכים לשלב 2!');
-                return;
-            }
-            if (index + 1 === 3) {
-                if (!uploadedImageHash) {
-                    alert('חובה לבחור תמונה תחילה.');
-                    return;
-                }
-                if (!document.getElementById('wizHeadline').value || !document.getElementById('wizPrimaryText').value) {
-                    alert('אנא מלא כותרת וטקסט שיווקי לפני מעבר לשלב 3.');
-                    return;
-                }
-            }
+            // Navigation is now unlocked
             showStep(index + 1);
         };
     });
@@ -127,18 +113,7 @@ function closeWizard() {
 }
 
 function nextStep(currentStep) {
-    if (currentStep === 1) {
-        if (!uploadedImageHash) {
-            alert('חובה לבחור תמונה לפני שממשיכים!');
-            return;
-        }
-    }
-    if (currentStep === 2) {
-        if (!document.getElementById('wizHeadline').value || !document.getElementById('wizPrimaryText').value) {
-            alert('אנא מלא כותרת וטקסט שיווקי.');
-            return;
-        }
-    }
+    // Navigation is now unlocked
     showStep(currentStep + 1);
 }
 
